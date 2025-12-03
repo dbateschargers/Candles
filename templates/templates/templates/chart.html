@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ ticker }} Chart</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+<h1>{{ ticker }} — Live Candles</h1>
+
+<canvas id="candleChart" width="900" height="450"></canvas>
+
+<script>
+async function loadData() {
+    const resp = await fetch(`/data?ticker={{ ticker }}`);
+    const json = await resp.json();
+    return json.candles;
+}
+
+async function render() {
+    let data = await loadData();
+
+    const ctx = document.getElementById('candleChart');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: data.map((_, i) => i),
+            datasets: [{
+                label: '{{ ticker }}',
+                data: data,
+                borderColor: 'blue'
+            }]
+        }
+    });
+}
+
+render();
+</script>
+
+</body>
+</html>
