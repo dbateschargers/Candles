@@ -1,7 +1,27 @@
 <!DOCTYPE html>
 <html>
-  <body>
-    <h1>Welcome</h1>
-    <a href="/chart">View Candle Chart</a>
-  </body>
+<head>
+    <title>Select Game</title>
+    <style>
+        body { background: #111; color: white; padding: 40px; font-family: Arial; }
+        select { padding: 10px; font-size: 16px; width: 300px; }
+        button { padding: 10px 20px; font-size: 16px; margin-left: 10px; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<h1>Select a Kalshi Game</h1>
+
+<form action="/chart" method="get">
+    <select name="ticker">
+        <option value="KXNFLGAME-2025PHI">NFL — PHI Game</option>
+        <option value="KXNFLGAME-2025DAL">NFL — DAL Game</option>
+        <option value="KXNBAGAME-LALGSW">NBA — Lakers vs. Warriors</option>
+        <option value="KXNCAABGAME-DUKEUNC">NCAAB — Duke vs UNC</option>
+    </select>
+
+    <button type="submit">Load Chart</button>
+</form>
+
+</body>
 </html>
