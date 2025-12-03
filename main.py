@@ -1,81 +1,36 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request
 import requests
-import time
+import base64
+from io import BytesIO
+import matplotlib.pyplot as plt
 
 app = Flask(__name__)
 
-KALSHI_BASE = "https://api.kalshi.com/trade-api/v2"
-SPORT_PREFIXES = ["NBA", "NFL", "CFB", "CBB"]
-
-
-def get_markets():
-    """Get all sports markets."""
-    url = f"{KALSHI_BASE}/markets"
-    r = requests.get(url).json()
-    markets = []
-
-    for m in r.get("markets", []):
-        ticker = m.get("ticker", "")
-        for prefix in SPORT_PREFIXES:
-            if ticker.startswith(prefix):
-                markets.append({
-                    "ticker": ticker,
-                    "title": m.get("title", ""),
-                    "yes_bid": m.get("yes_bid"),
-                    "no_bid": m.get("no_bid")
-                })
-                break
-
-    return markets
-
-
-def get_orderbook(ticker):
-    url = f"{KALSHI_BASE}/markets/{ticker}/orderbook"
-    r = requests.get(url).json()
-    return r.get("orderbook", {})
-
-
-def get_candles(ticker):
-    """Build pseudo-candles from orderbook snapshots."""
-    candles = []
-    for _ in range(20):
-        ob = get_orderbook(ticker)
-        yes = ob.get("yes", [])
-        no = ob.get("no", [])
-
-        if yes:
-            price = yes[0][0]
-        elif no:
-            price = 100 - no[0][0]
-        else:
-            price = None
-
-        if price:
-            candles.append(price)
-
-        time.sleep(0.4)
-
-    return candles
-
-
+# Home page
 @app.route("/")
-def index():
-    markets = get_markets()
-    return render_template("index.html", markets=markets)
+def home():
+    return render_template("index.html")
 
-
+# Show chart for a ticker
 @app.route("/chart")
 def chart():
-    ticker = request.args.get("ticker")
-    return render_template("chart.html", ticker=ticker)
+    ticker = request.args.get("ticker", "KXNFLGAME-2025PHI")
+    
+    # Example fake candle data — replace with Kalshi API later
+    prices = [40, 45, 60, 55, 70, 65]
 
+    # Generate chart
+    fig, ax = plt.subplots()
+    ax.plot(prices)
+    ax.set_title(f"Candles for {ticker}")
 
-@app.route("/data")
-def data():
-    ticker = request.args.get("ticker")
-    candles = get_candles(ticker)
-    return jsonify({"ticker": ticker, "candles": candles})
+    # Convert chart to base64
+    img = BytesIO()
+    plt.savefig(img, format="png")
+    img.seek(0)
+    chart_url = "data:image/png;base64," + base64.b64encode(img.getvalue()).decode()
 
+    return render_template("chart.html", ticker=ticker, chart_url=chart_url)
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8000)
+    app.run(host="0.0.0.0", port=8080)
