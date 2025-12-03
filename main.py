@@ -1,36 +1,42 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, jsonify
 import requests
-import base64
-from io import BytesIO
-import matplotlib.pyplot as plt
+import os
 
 app = Flask(__name__)
 
-# Home page
+KALSHI_API_KEY = os.getenv("KALSHI_API_KEY")
+
 @app.route("/")
 def home():
     return render_template("index.html")
 
-# Show chart for a ticker
 @app.route("/chart")
 def chart():
-    ticker = request.args.get("ticker", "KXNFLGAME-2025PHI")
-    
-    # Example fake candle data — replace with Kalshi API later
-    prices = [40, 45, 60, 55, 70, 65]
+    ticker = request.args.get("ticker")
+    return render_template("chart.html", ticker=ticker)
 
-    # Generate chart
-    fig, ax = plt.subplots()
-    ax.plot(prices)
-    ax.set_title(f"Candles for {ticker}")
+@app.route("/api/candles")
+def get_candles():
+    ticker = request.args.get("ticker")
 
-    # Convert chart to base64
-    img = BytesIO()
-    plt.savefig(img, format="png")
-    img.seek(0)
-    chart_url = "data:image/png;base64," + base64.b64encode(img.getvalue()).decode()
+    url = f"https://api.kalshi.com/trade-api/v2/markets/{ticker}/candles?interval=1m"
+    headers = { "Authorization": f"Bearer {KALSHI_API_KEY}" }
 
-    return render_template("chart.html", ticker=ticker, chart_url=chart_url)
+    resp = requests.get(url, headers=headers)
+    data = resp.json()
+
+    # Convert Kalshi candles → TradingView format
+    candles = []
+    for c in data.get("candles", []):
+        candles.append({
+            "time": c["start_time"],
+            "open": c["open"],
+            "high": c["high"],
+            "low": c["low"],
+            "close": c["close"]
+        })
+
+    return jsonify(candles)
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8080)
