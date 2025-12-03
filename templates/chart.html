@@ -1,7 +1,50 @@
 <!DOCTYPE html>
 <html>
-  <body>
-    <h1>{{ ticker }} Market</h1>
-    <img src="{{ chart_url }}">
-  </body>
+<head>
+    <title>Live Candlestick Chart</title>
+    <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+
+    <style>
+        body { margin: 0; background: #0d0d0d; color: white; }
+        #chart { width: 100vw; height: 100vh; }
+    </style>
+</head>
+<body>
+
+<div id="chart"></div>
+
+<script>
+    const chart = LightweightCharts.createChart(document.getElementById("chart"), {
+        layout: {
+            backgroundColor: '#0d0d0d',
+            textColor: 'white'
+        },
+        grid: {
+            vertLines: { color: '#1f1f1f' },
+            horzLines: { color: '#1f1f1f' }
+        }
+    });
+
+    const series = chart.addCandlestickSeries({
+        upColor: '#00ff84',
+        downColor: '#ff4976',
+        borderUpColor: '#00ff84',
+        borderDownColor: '#ff4976',
+        wickUpColor: '#00ff84',
+        wickDownColor: '#ff4976',
+    });
+
+    async function load() {
+        const ticker = "{{ ticker }}";
+        const res = await fetch(`/api/candles?ticker=${ticker}`);
+        const data = await res.json();
+        series.setData(data);
+    }
+
+    load();
+    setInterval(load, 3000); // auto-refresh every 3s
+</script>
+
+</body>
 </html>
+
